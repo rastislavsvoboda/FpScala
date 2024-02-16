@@ -1,4 +1,6 @@
-﻿namespace PreludeLib;
+﻿using System.Diagnostics;
+
+namespace PreludeLib;
 
 public static class Utils
 {
@@ -29,21 +31,18 @@ public static class Utils
         }
     }
 
-    public static T Retry<T>(int maxAttempt, Func<T> func)
-    {
-        // Require(maxAttempt > 0, "Must be greater than 0", nameof(maxAttempt));
-        if (maxAttempt <= 0) throw new ArgumentException("Must be greater than 0", nameof(maxAttempt));
-        switch (Try(func))
+    public static T Retry<T>(int maxAttempt, Func<T> func) =>
+        maxAttempt switch
         {
-            case Success<T>(var value):
-                return value;
-            case Failure<T>(var exception):
-                if (maxAttempt == 1) throw exception;
-                return Retry(maxAttempt - 1, func);
-            default:
-                throw new ArgumentOutOfRangeException("Invalid subclass of result");
-        }
-    }
+            <= 0 => throw new ArgumentException("Must be greater than 0", nameof(maxAttempt)),
+            1 => func(),
+            _ => Try(func) switch
+            {
+                Success<T>(var value) => value,
+                Failure<T>(_) => Retry(maxAttempt - 1, func),
+                _ => throw new UnreachableException("Unknown Result subclass")
+            }
+        };
 
     public static void Require(bool condition, string message)
     {
