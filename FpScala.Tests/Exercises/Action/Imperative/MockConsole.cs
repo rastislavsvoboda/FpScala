@@ -15,11 +15,15 @@ public class MockConsole : IConsole
 
     public string ReadLine()
     {
-        throw new NotImplementedException();
+        if (!_inputs.Any()) throw new Exception("No input in the console");
+
+        var line = _inputs.First();
+        _inputs.RemoveAt(0);
+        return line;
     }
 
     public void WriteLine(string message)
     {
-        throw new NotImplementedException();
+        _outputs.Add(message);
     }
 }
