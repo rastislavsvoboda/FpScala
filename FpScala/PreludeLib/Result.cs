@@ -1,41 +1,16 @@
 ﻿namespace PreludeLib;
 
-public class Result
+public abstract record Result<T>(bool IsSuccess)
 {
-    private Exception? _failure;
-
-    public bool IsFailure => _failure != null;
-    public bool IsSuccess => !IsFailure;
-
-    private Result()
-    {
-    }
-
-    public static Result Success()
-        => new Result();
-
-    public static Result Fail(Exception exception)
-        => new Result() {_failure = exception};
+    public bool IsFailure => !IsSuccess;
+    // public abstract Exception Failed();
 }
 
-/*
-public class Result<T> where T : class
+public record Failure<T>(Exception Exception) : Result<T>(false)
 {
-    private Exception? _failure;
-
-    public T? Value { get; }
-    public bool IsFailure => _failure != null;
-    public bool IsSuccess => !IsFailure;
-
-    private Result(T? value)
-    {
-        Value = value;
-    }
-
-    public static Result<T> Success(T value)
-        => new Result<T>(value);
-
-    public static Result<T> Fail(Exception exception)
-        => new Result<T>(null) {_failure = exception};
+    // public override Exception Failed() => Exception;
 }
-*/
+public record Success<T>(T Value) : Result<T>(true)
+{
+    // public override Exception Failed() => throw new InvalidOperationException("this result is success");
+}
