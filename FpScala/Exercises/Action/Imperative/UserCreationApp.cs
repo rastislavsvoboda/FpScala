@@ -93,4 +93,23 @@ public static class UserCreationApp
     public static DateOnly ParseDate(string line) =>
         DateOnly.ParseExact(line, "dd-MM-yyyy");
 
+    
+
+    
+    // public static Action Retry<T>(int maxAttempt)
+    // {
+    //     if (maxAttempt <= 0) throw new ArgumentOutOfRangeException(nameof(maxAttempt), "Must be greater than 0");
+    //
+    //     switch (Utils.Try(() => func))
+    //     {
+    //         case Success<T>(var value):
+    //             return value;
+    //         case Failure<T>(var exception):
+    //             if (maxAttempt == 1) throw exception;
+    //             return Retry(maxAttempt - 1, func);
+    //         default:
+    //             throw new ArgumentOutOfRangeException();
+    //     }
+    // }    
+
 }
