@@ -173,4 +173,62 @@ public class IOTest
         result.Should().Be(new Success<string>("Hello"));
         counter.Should().Be(3);
     }
+
+    [Fact]
+    public void Attempt_success()
+    {
+        var counter = 0;
+
+        var action = new IO<int>(() => counter += 1).Attempt();
+        counter.Should().Be(0, because: "nothing happened before UnsafeRun");
+
+        var result = action.UnsafeRun();
+        counter.Should().Be(1);
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Attempt_failure()
+    {
+        var counter = 0;
+        var error = new Exception("Boom");
+        var action = new IO<int>(() =>
+        {
+            counter += 1;
+            throw error;
+        }).Attempt();
+        counter.Should().Be(0, because: "nothing happened before UnsafeRun");
+
+        var result = action.UnsafeRun();
+        counter.Should().Be(1);
+        result.Should().Be(new Failure<int>(error));
+    }
+
+    [Fact]
+    public void HandleWithError_success()
+    {
+        var counter = 0;
+        var first = new IO<int>(() => counter += 1).AndThen(new IO<string>(() => "A"));
+        var second = new IO<int>(() => counter *= 2).AndThen(new IO<string>(() => "B"));
+        var action = first.HandleErrorWith(_ => second);
+        counter.Should().Be(0, because: "nothing happened before UnsafeRun");
+        
+        var result = action.UnsafeRun();
+        result.Should().Be("A");
+        counter.Should().Be(1, because: "Only first is executed");
+    }
+    
+    [Fact]
+    public void HandleWithError_failure()
+    {
+        var counter = 0;
+        var first = new IO<int>(() => counter += 1).AndThen(IO<int>.Fail(new Exception("Boom")));
+        var second = new IO<int>(() => counter *= 2).AndThen(new IO<int>(() => -1));
+        var action = first.HandleErrorWith(_ => second);
+        counter.Should().Be(0, because: "nothing happened before UnsafeRun");
+        
+        var result = action.UnsafeRun();
+        counter.Should().Be(2, because: "first and second were executed in the expected order");
+        result.Should().Be(-1);
+    }
 }

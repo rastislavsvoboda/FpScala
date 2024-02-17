@@ -1,4 +1,6 @@
-﻿namespace FpScala.Exercises.Action.FP;
+﻿using PreludeLib;
+
+namespace FpScala.Exercises.Action.FP;
 
 public class UserCreationServiceApp
 {
