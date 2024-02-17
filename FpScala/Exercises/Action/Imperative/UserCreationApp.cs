@@ -1,8 +1,7 @@
-﻿using PreludeLib;
-
-namespace FpScala.Exercises.Action.Imperative;
+﻿namespace FpScala.Exercises.Action.Imperative;
 
 using static Console;
+using static PreludeLib.Utils;
 
 public static class UserCreationApp
 {
@@ -52,43 +51,25 @@ public static class UserCreationApp
         return dateOfBirth;
     }
 
-    public static bool ReadSubscribeToMailingListRetry(IConsole console, int maxAttempt)
-    {
-        if (maxAttempt <= 0) throw new ArgumentOutOfRangeException(nameof(maxAttempt), "Must be greater than 0");
-    
-        console.WriteLine("Would like to subscribe to our mailing list? [Y/N]");
-        var line = console.ReadLine();
-        switch (Utils.Try(() => ParseYesNo(line)))
+    public static bool ReadSubscribeToMailingListRetry(IConsole console, int maxAttempt) =>
+        Retry(maxAttempt, () =>
         {
-            case Success<bool>(var yesNo):
-                return yesNo;
-            case Failure<bool>(var exception):
-                console.WriteLine("""Incorrect format, enter "Y" for "Yes", "N" for "No" """);
-                if (maxAttempt == 1) throw exception;
-                return ReadSubscribeToMailingListRetry(console, maxAttempt - 1);
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-    }
+            console.WriteLine("Would like to subscribe to our mailing list? [Y/N]");
+            var line = console.ReadLine();
+            return OnError(
+                func: () => ParseYesNo(line),
+                cleanup: _ => console.WriteLine("""Incorrect format, enter "Y" for "Yes", "N" for "No" """));
+        });
 
-    public static DateOnly ReadDateOfBirthRetry(IConsole console, int maxAttempt)
-    {
-        if (maxAttempt <= 0) throw new ArgumentOutOfRangeException(nameof(maxAttempt), "Must be greater than 0");
-        
-        console.WriteLine("What's your date of birth? [dd-mm-yyyy]");
-        var line = console.ReadLine();
-        switch (Utils.Try(() => ParseDate(line)))
+    public static DateOnly ReadDateOfBirthRetry(IConsole console, int maxAttempt) =>
+        Retry(maxAttempt, () =>
         {
-            case Success<DateOnly>(var date):
-                return date;
-            case Failure<DateOnly>(var exception):
-                console.WriteLine("""Incorrect format, for example enter "18-03-2001" for 18th of March 2001""");
-                if (maxAttempt == 1) throw exception;
-                return ReadDateOfBirthRetry(console, maxAttempt - 1);
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-    }
+            console.WriteLine("What's your date of birth? [dd-mm-yyyy]");
+            var line = console.ReadLine();
+            return OnError(
+                func: () => ParseDate(line),
+                cleanup: _ => console.WriteLine("""Incorrect format, for example enter "18-03-2001" for 18th of March 2001"""));
+        });
 
     public static DateOnly ParseDate(string line) =>
         DateOnly.ParseExact(line, "dd-MM-yyyy");

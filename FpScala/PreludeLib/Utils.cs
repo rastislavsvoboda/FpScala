@@ -44,6 +44,20 @@ public static class Utils
             }
         };
 
+    public static T OnError<T>(Func<T> func, Action<Exception> cleanup)
+    {
+        switch (Try(func))
+        {
+            case Success<T>(var value):
+                return value;
+            case Failure<T>(var exception):
+                cleanup(exception);
+                throw exception;
+            default:
+                throw new UnreachableException("Unknown Result subclass");
+        }
+    }
+
     public static void Require(bool condition, string message)
     {
         if (!condition) throw new ArgumentException(message);
