@@ -164,10 +164,11 @@ public class IOTest
             counter += 1;
             if (counter < 3) throw error;
             return "Hello";
-        }).Retry(5);
+        });
+        var retryAction = action.Retry(5);
         counter.Should().Be(0, because: "nothing happened before UnsafeRun");
 
-        var result = Try(() => action.UnsafeRun());
+        var result = Try(() => retryAction.UnsafeRun());
 
         result.Should().Be(new Success<string>("Hello"));
         counter.Should().Be(3);

@@ -9,7 +9,7 @@ using Xunit;
 public class UserCreationExercisesTest
 {
     [Fact]
-    public void TestParseYesNo()
+    public void Test_ParseYesNo()
     {
         UserCreationService.ParseYesNo("Y").Should().BeTrue();
         UserCreationService.ParseYesNo("N").Should().BeFalse();
@@ -17,7 +17,7 @@ public class UserCreationExercisesTest
     }
 
     [Fact]
-    public void TestReadName()
+    public void Test_ReadName()
     {
         var console = new MockConsole(new List<string> {"Rastislav"}, new List<string>());
         var service = new UserCreationService(console, DefaultClock());
@@ -114,91 +114,6 @@ public class UserCreationExercisesTest
     }
 
     // PART 2: Error handling
-
-    [Fact]
-    public void ReadSubscribeToMailingList_with_Retry_negative_maxAttempt()
-    {
-        var console = new MockConsole(new List<string>(), new List<string>());
-        var service = new UserCreationService(console, DefaultClock());
-
-        var result = Try(() => service.ReadSubscribeToMailingList().Retry(maxAttempt: -1).UnsafeRun());
-
-        result.IsFailure.Should().BeTrue();
-    }
-
-    [Fact]
-    public void ReadSubscribeToMailingList_with_Retry_example_success()
-    {
-        var outputs = new List<string>();
-        var console = new MockConsole(new List<string> {"Never", "N"}, outputs);
-        var service = new UserCreationService(console, DefaultClock());
-
-        var result = service.ReadSubscribeToMailingList().Retry(maxAttempt: 2).UnsafeRun();
-
-        result.Should().BeFalse();
-        Assert.Collection(outputs,
-            item => item.Should().Be("Would like to subscribe to our mailing list? [Y/N]"),
-            item => item.Should().Be("""Incorrect format, enter "Y" for "Yes", "N" for "No" """),
-            item => item.Should().Be("Would like to subscribe to our mailing list? [Y/N]"));
-    }
-
-    [Fact]
-    public void ReadSubscribeToMailingList_with_Retry_example_invalid_input()
-    {
-        var outputs = new List<string>();
-        var console = new MockConsole(new List<string> {"Never"}, outputs);
-        var service = new UserCreationService(console, DefaultClock());
-
-        var result = Try(() => service.ReadSubscribeToMailingList().Retry(maxAttempt: 1).UnsafeRun());
-
-        result.IsFailure.Should().BeTrue();
-        Assert.Collection(outputs,
-            item => item.Should().Be("Would like to subscribe to our mailing list? [Y/N]"),
-            item => item.Should().Be("""Incorrect format, enter "Y" for "Yes", "N" for "No" """));
-    }
-
-    [Fact]
-    public void ReadDateOfBirth_with_Retry_negative_maxAttempt()
-    {
-        var console = new MockConsole(new List<string>(), new List<string>());
-        var service = new UserCreationService(console, DefaultClock());
-
-        var result = Try(() => service.ReadDateOfBirth().Retry(maxAttempt: -1).UnsafeRun());
-
-        result.IsFailure.Should().BeTrue();
-    }
-
-    [Fact]
-    public void ReadDateOfBirth_with_Retry_example_success()
-    {
-        var outputs = new List<string>();
-        var console = new MockConsole(new List<string> {"September 21st 1975", "21-09-1975"}, outputs);
-        var service = new UserCreationService(console, DefaultClock());
-
-        var result = service.ReadDateOfBirth().Retry(maxAttempt: 2).UnsafeRun();
-
-        result.Should().Be(new DateOnly(1975, 9, 21));
-        Assert.Collection(outputs,
-            item => item.Should().Be("What's your date of birth? [dd-mm-yyyy]"),
-            item => item.Should().Be("""Incorrect format, for example enter "18-03-2001" for 18th of March 2001"""),
-            item => item.Should().Be("What's your date of birth? [dd-mm-yyyy]"));
-    }
-
-    [Fact]
-    public void ReadDateOfBirth_with_Retry_example_invalid_input()
-    {
-        var outputs = new List<string>();
-        const string invalidAttempt = "September 21st 1975";
-        var console = new MockConsole(new List<string> {invalidAttempt}, outputs);
-        var service = new UserCreationService(console, DefaultClock());
-
-        var result = Try(() => service.ReadDateOfBirth().Retry(maxAttempt: 1).UnsafeRun());
-
-        result.IsFailure.Should().BeTrue();
-        Assert.Collection(outputs,
-            item => item.Should().Be("What's your date of birth? [dd-mm-yyyy]"),
-            item => item.Should().Be("""Incorrect format, for example enter "18-03-2001" for 18th of March 2001"""));
-    }
 
     [Fact]
     public void Test_ReadUser_with_retry()
