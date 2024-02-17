@@ -17,11 +17,11 @@ public class UserCreationService
     public User ReadUser()
     {
         var name = ReadName();
-        var dateOfBirth = ReadDateOfBirthRetry(maxAttempt: 3);
-        var subscribed = ReadSubscribeToMailingListRetry(maxAttempt: 3);
+        var dateOfBirth = Retry(3, ReadDateOfBirth);
+        var subscribed = Retry(3, ReadSubscribeToMailingList);
         var now = _clock.Now;
         var user = new User(name, dateOfBirth, subscribed, now);
-        WriteLine($"User is ${user}");
+        _console.WriteLine($"User is {user}");
         return user;
     }
 
@@ -36,8 +36,9 @@ public class UserCreationService
     {
         _console.WriteLine("What's your date of birth? [dd-mm-yyyy]");
         var line = _console.ReadLine();
-        var dateOfBirth = ParseDate(line);
-        return dateOfBirth;
+        return OnError(
+            func: () => ParseDate(line),
+            cleanup: _ => _console.WriteLine("""Incorrect format, for example enter "18-03-2001" for 18th of March 2001"""));
     }
 
     public DateOnly ReadDateOfBirthRetry(int maxAttempt) =>
@@ -54,7 +55,9 @@ public class UserCreationService
     {
         _console.WriteLine("Would like to subscribe to our mailing list? [Y/N]");
         var line = _console.ReadLine();
-        return ParseYesNo(line);
+        return OnError(
+            func: () => ParseYesNo(line),
+            cleanup: _ => _console.WriteLine("""Incorrect format, enter "Y" for "Yes", "N" for "No" """));
     }
 
     public bool ReadSubscribeToMailingListRetry(int maxAttempt) =>
@@ -82,4 +85,7 @@ public class UserCreationService
 
     public static DateOnly ParseDate(string line) =>
         DateOnly.ParseExact(line, "dd-MM-yyyy");
+
+    public static string FormatDate(DateOnly date)
+        => date.ToString("dd-MM-yyyy");
 }

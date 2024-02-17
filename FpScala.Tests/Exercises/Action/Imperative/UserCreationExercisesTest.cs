@@ -84,7 +84,8 @@ public class UserCreationExercisesTest
         Assert.Collection(outputs,
             item => item.Should().Be("What's your name?"),
             item => item.Should().Be("What's your date of birth? [dd-mm-yyyy]"),
-            item => item.Should().Be("Would like to subscribe to our mailing list? [Y/N]"));
+            item => item.Should().Be("Would like to subscribe to our mailing list? [Y/N]"),
+            item => item.Should().Be($"User is {expected}"));
     }
 
     // PART 2: Error handling
@@ -204,6 +205,19 @@ public class UserCreationExercisesTest
         var result = service.ReadUser();
 
         result.Should().Be(expected);
+        Assert.Collection(outputs,
+            item => item.Should().Be("What's your name?"),
+            item => item.Should().Be("What's your date of birth? [dd-mm-yyyy]"),
+            item => item.Should().Be("""Incorrect format, for example enter "18-03-2001" for 18th of March 2001"""),
+            item => item.Should().Be("What's your date of birth? [dd-mm-yyyy]"),
+            item => item.Should().Be("""Incorrect format, for example enter "18-03-2001" for 18th of March 2001"""),
+            item => item.Should().Be("What's your date of birth? [dd-mm-yyyy]"),
+            item => item.Should().Be("Would like to subscribe to our mailing list? [Y/N]"),
+            item => item.Should().Be("""Incorrect format, enter "Y" for "Yes", "N" for "No" """),
+            item => item.Should().Be("Would like to subscribe to our mailing list? [Y/N]"),
+            item => item.Should().Be("""Incorrect format, enter "Y" for "Yes", "N" for "No" """),
+            item => item.Should().Be("Would like to subscribe to our mailing list? [Y/N]"),
+            item => item.Should().Be($"User is {expected}"));
     }
 
     private IClock DefaultClock() => new MockClock(new DateTime(2000, 1, 1));
