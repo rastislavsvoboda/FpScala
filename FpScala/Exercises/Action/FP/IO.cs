@@ -12,6 +12,21 @@ public class IO<T>
     public T UnsafeRun() =>
         _func();
 
+    public IO<TOther> AndThen<TOther>(IO<TOther> other) =>
+        new(() =>
+        {
+            // run current action but discard result
+            UnsafeRun();
+            // run other and return it's result
+            return other.UnsafeRun();
+        });
+
+    public IO<TNext> Map<TNext>(Func<T, TNext> callback) =>
+        new(() => callback(UnsafeRun()));
+
+    public IO<TNext> FlatMap<TNext>(Func<T, IO<TNext>> callback) =>
+        new(() => callback(UnsafeRun()).UnsafeRun());
+
     public IO<T> HandleErrorWith(Func<Exception, IO<T>> callback)
     {
         throw new NotImplementedException();
@@ -26,15 +41,6 @@ public class IO<T>
         //     throw;
         // }
     }
-
-    public IO<TOther> AndThen<TOther>(IO<TOther> other) =>
-        new(() =>
-        {
-            // run current action but discard result
-            UnsafeRun();
-            // run other and return it's result
-            return other.UnsafeRun();
-        });
 
     public static IO<T> Fail(Exception error) =>
         new(() => throw error);

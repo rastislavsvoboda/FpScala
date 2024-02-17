@@ -1,6 +1,5 @@
 ﻿namespace FpScala.Exercises.Action.Imperative;
 
-using static Console;
 using static PreludeLib.Utils;
 
 public class UserCreationService

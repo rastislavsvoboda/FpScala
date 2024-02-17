@@ -4,10 +4,10 @@ namespace FpScala.Tests.Exercises.Action.FP;
 
 public class MockClock : IClock
 {
-    public DateTime Now { get; }
+    public IO<DateTime> Now { get; }
 
     public MockClock(DateTime now)
     {
-        Now = now;
+        Now = new IO<DateTime>(() => now);
     }
 }

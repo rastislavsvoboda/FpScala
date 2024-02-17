@@ -1,4 +1,6 @@
-﻿namespace FpScala.Exercises.Action.FP;
+﻿using PreludeLib;
+
+namespace FpScala.Exercises.Action.FP;
 
 using static Console;
 using static PreludeLib.Utils;
@@ -14,41 +16,50 @@ public class UserCreationService
         _clock = clock;
     }
 
+//     public IO<User> ReadUser() =>
+//         new(() =>
+//         {
+//             // TODO: do with retry
+//
+//             var name = ReadName().UnsafeRun();
+// //        var dateOfBirth = Retry(3, ReadDateOfBirth);
+//             var dateOfBirth = ReadDateOfBirth().UnsafeRun();
+// //        var subscribed = Retry(3, ReadSubscribeToMailingList);
+//             var subscribed = ReadSubscribeToMailingList().UnsafeRun();
+//             var now = _clock.Now;
+//             var user = new User(name, dateOfBirth, subscribed, now);
+//             _console.WriteLine($"User is {user}");
+//             return user;
+//         });
+
+    // ugly syntax via nested FlatMap
+    public IO<User> ReadUserEx() =>
+        ReadName()
+            .FlatMap(name => ReadDateOfBirth()
+                .FlatMap(dateOfBirth => ReadSubscribeToMailingList()
+                    .FlatMap(subscribed => _clock.Now.FlatMap(now =>
+                    {
+                        var user = new User(name, dateOfBirth, subscribed, now);
+                        return WriteLine($"User is {user}").Map(_ => user);
+                    }))));
+
     public IO<User> ReadUser() =>
-        new(() =>
-        {
-            // TODO: do with retry
-            var name = ReadName().UnsafeRun();
-//        var dateOfBirth = Retry(3, ReadDateOfBirth);
-            var dateOfBirth = ReadDateOfBirth().UnsafeRun();
-//        var subscribed = Retry(3, ReadSubscribeToMailingList);
-            var subscribed = ReadSubscribeToMailingList().UnsafeRun();
-            var now = _clock.Now;
-            var user = new User(name, dateOfBirth, subscribed, now);
-            _console.WriteLine($"User is {user}");
-            return user;
-        });
+        from name in ReadName()
+        from dateOfBirth in ReadDateOfBirth()
+        from subscribed in ReadSubscribeToMailingList()
+        from now in _clock.Now
+        let user = new User(name, dateOfBirth, subscribed, now)
+        from _ in WriteLine($"User is {user}")
+        select user;
 
     public IO<string> ReadName() =>
-        new(() =>
-        {
-            _console.WriteLine("What's your name?").UnsafeRun();
-            var name = _console.ReadLine().UnsafeRun();
-            return name;
-        });
+        WriteLine("What's your name?")
+            .AndThen(ReadLine());
 
     public IO<DateOnly> ReadDateOfBirth() =>
-        new(() =>
-        {
-            _console.WriteLine("What's your date of birth? [dd-mm-yyyy]").UnsafeRun();
-            var line = _console.ReadLine().UnsafeRun();
-            // TODO
-            var r = ParseDate(line);
-            return r;
-            // return OnError(
-            //     func: () => ParseDate(line),
-            //     cleanup: _ => _console.WriteLine("""Incorrect format, for example enter "18-03-2001" for 18th of March 2001"""));
-        });
+        WriteLine("What's your date of birth? [dd-mm-yyyy]")
+            .AndThen(ReadLine())
+            .Map(ParseDate);
 
     // public DateOnly ReadDateOfBirthRetry(int maxAttempt) =>
     //     Retry(maxAttempt, () =>
@@ -61,17 +72,13 @@ public class UserCreationService
     //     });
 
     public IO<bool> ReadSubscribeToMailingList() =>
-        new(() =>
-        {
-            _console.WriteLine("Would like to subscribe to our mailing list? [Y/N]").UnsafeRun();
-            var line = _console.ReadLine().UnsafeRun();
-            var r = ParseYesNo(line);
-            return r;
-            // TODO
-            // return OnError(
-            //     func: () => ParseYesNo(line),
-            //     cleanup: _ => _console.WriteLine("""Incorrect format, enter "Y" for "Yes", "N" for "No" """));
-        });
+        WriteLine("Would like to subscribe to our mailing list? [Y/N]")
+            .AndThen(ReadLine())
+            .Map(ParseYesNo);
+    // TODO
+    // return OnError(
+    //     func: () => ParseYesNo(line),
+    //     cleanup: _ => _console.WriteLine("""Incorrect format, enter "Y" for "Yes", "N" for "No" """));
 
     // public bool ReadSubscribeToMailingListRetry(int maxAttempt) =>
     //     Retry(maxAttempt, () =>
@@ -101,4 +108,12 @@ public class UserCreationService
 
     public static string FormatDate(DateOnly date) =>
         date.ToString("dd-MM-yyyy");
+
+    // helpers using _console simulating import in Scala
+    // or "using static" in C# if then would be static methods
+    private IO<string> ReadLine() =>
+        _console.ReadLine();
+
+    private IO<Unit> WriteLine(string message) =>
+        _console.WriteLine(message);
 }

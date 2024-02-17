@@ -1,9 +1,7 @@
-﻿using FpScala.Exercises.Action.Imperative;
+﻿//using FpScala.Exercises.Action.Imperative;
+using FpScala.Exercises.Action.FP;
 
-var console = new SystemConsole();
-var clock = new SystemClock();
-var service = new UserCreationService(console, clock);
-
-var user = service.ReadUser();
+var app = new UserCreationServiceApp();
+app.Run();
 
 // Console.ReadLine();
