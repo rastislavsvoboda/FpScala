@@ -1,4 +1,3 @@
-using PreludeLib;
 using static PreludeLib.Utils;
 
 namespace FpScala.Tests.Exercises.Action.FP;
@@ -94,7 +93,7 @@ public class UserCreationExercisesTest
     }
 
     [Fact]
-    public void TestReadUser()
+    public void Test_ReadUser_with_correct_inputs()
     {
         var inputs = new List<string> {"Rastislav", "21-09-1975", "Y"};
         var outputs = new List<string>();
@@ -114,28 +113,27 @@ public class UserCreationExercisesTest
             item => item.Should().Be($"User is {expected}"));
     }
 
-/*
     // PART 2: Error handling
 
     [Fact]
-    public void ReadSubscribeToMailingListRetry_negative_maxAttempt()
+    public void ReadSubscribeToMailingList_with_Retry_negative_maxAttempt()
     {
         var console = new MockConsole(new List<string>(), new List<string>());
         var service = new UserCreationService(console, DefaultClock());
 
-        var result = Try(() => service.ReadSubscribeToMailingListRetry(maxAttempt: -1));
+        var result = Try(() => service.ReadSubscribeToMailingList().Retry(maxAttempt: -1).UnsafeRun());
 
         result.IsFailure.Should().BeTrue();
     }
 
     [Fact]
-    public void ReadSubscribeToMailingListRetry_example_success()
+    public void ReadSubscribeToMailingList_with_Retry_example_success()
     {
         var outputs = new List<string>();
         var console = new MockConsole(new List<string> {"Never", "N"}, outputs);
         var service = new UserCreationService(console, DefaultClock());
 
-        var result = service.ReadSubscribeToMailingListRetry(maxAttempt: 2);
+        var result = service.ReadSubscribeToMailingList().Retry(maxAttempt: 2).UnsafeRun();
 
         result.Should().BeFalse();
         Assert.Collection(outputs,
@@ -145,45 +143,39 @@ public class UserCreationExercisesTest
     }
 
     [Fact]
-    public void ReadSubscribeToMailingListRetry_example_invalid_input()
+    public void ReadSubscribeToMailingList_with_Retry_example_invalid_input()
     {
         var outputs = new List<string>();
         var console = new MockConsole(new List<string> {"Never"}, outputs);
         var service = new UserCreationService(console, DefaultClock());
 
-        var result = Try(() => service.ReadSubscribeToMailingListRetry(maxAttempt: 1));
+        var result = Try(() => service.ReadSubscribeToMailingList().Retry(maxAttempt: 1).UnsafeRun());
 
         result.IsFailure.Should().BeTrue();
         Assert.Collection(outputs,
             item => item.Should().Be("Would like to subscribe to our mailing list? [Y/N]"),
             item => item.Should().Be("""Incorrect format, enter "Y" for "Yes", "N" for "No" """));
-
-        // check that the error message is the same as 'ReadSubscribeToMailingList'
-        var console2 = new MockConsole(new List<string> {"Never"}, new List<string>());
-        var service2 = new UserCreationService(console2, DefaultClock());
-        var result2 = Try(() => service2.ReadSubscribeToMailingList());
-        Assert.Equal(((Failure<bool>) result).Exception.Message, ((Failure<bool>) result2).Exception.Message);
     }
 
     [Fact]
-    public void ReadDateOfBirthRetry_negative_maxAttempt()
+    public void ReadDateOfBirth_with_Retry_negative_maxAttempt()
     {
         var console = new MockConsole(new List<string>(), new List<string>());
         var service = new UserCreationService(console, DefaultClock());
 
-        var result = Try(() => service.ReadDateOfBirthRetry(maxAttempt: -1));
+        var result = Try(() => service.ReadDateOfBirth().Retry(maxAttempt: -1).UnsafeRun());
 
         result.IsFailure.Should().BeTrue();
     }
 
     [Fact]
-    public void ReadDateOfBirthRetry_example_success()
+    public void ReadDateOfBirth_with_Retry_example_success()
     {
         var outputs = new List<string>();
         var console = new MockConsole(new List<string> {"September 21st 1975", "21-09-1975"}, outputs);
         var service = new UserCreationService(console, DefaultClock());
 
-        var result = service.ReadDateOfBirthRetry(maxAttempt: 2);
+        var result = service.ReadDateOfBirth().Retry(maxAttempt: 2).UnsafeRun();
 
         result.Should().Be(new DateOnly(1975, 9, 21));
         Assert.Collection(outputs,
@@ -193,29 +185,23 @@ public class UserCreationExercisesTest
     }
 
     [Fact]
-    public void ReadDateOfBirthRetry_example_invalid_input()
+    public void ReadDateOfBirth_with_Retry_example_invalid_input()
     {
         var outputs = new List<string>();
         const string invalidAttempt = "September 21st 1975";
         var console = new MockConsole(new List<string> {invalidAttempt}, outputs);
         var service = new UserCreationService(console, DefaultClock());
 
-        var result = Try(() => service.ReadDateOfBirthRetry(maxAttempt: 1));
+        var result = Try(() => service.ReadDateOfBirth().Retry(maxAttempt: 1).UnsafeRun());
 
         result.IsFailure.Should().BeTrue();
         Assert.Collection(outputs,
             item => item.Should().Be("What's your date of birth? [dd-mm-yyyy]"),
             item => item.Should().Be("""Incorrect format, for example enter "18-03-2001" for 18th of March 2001"""));
-
-        // check that the error message is the same as 'ReadDateOfBirth'
-        var console2 = new MockConsole(new List<string> {invalidAttempt}, new List<string>());
-        var service2 = new UserCreationService(console2, DefaultClock());
-        var result2 = Try(() => service2.ReadDateOfBirth());
-        Assert.Equal(((Failure<DateOnly>) result).Exception.Message, ((Failure<DateOnly>) result2).Exception.Message);
     }
 
     [Fact]
-    public void TestReadUser_with_retry()
+    public void Test_ReadUser_with_retry()
     {
         var inputs = new List<string> {"Rastislav", "September 21th 1975", "1975-09-21", "21-09-1975", "No", "Never", "N"};
         var outputs = new List<string>();
@@ -229,7 +215,7 @@ public class UserCreationExercisesTest
             SubscribedToMailingList: false,
             CreatedAt: now);
 
-        var result = service.ReadUser();
+        var result = service.ReadUser().UnsafeRun();
 
         result.Should().Be(expected);
         Assert.Collection(outputs,
@@ -246,6 +232,6 @@ public class UserCreationExercisesTest
             item => item.Should().Be("Would like to subscribe to our mailing list? [Y/N]"),
             item => item.Should().Be($"User is {expected}"));
     }
-*/
+
     private IClock DefaultClock() => new MockClock(new DateTime(2000, 1, 1));
 }

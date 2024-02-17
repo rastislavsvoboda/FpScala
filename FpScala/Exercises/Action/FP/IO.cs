@@ -46,10 +46,24 @@ public class IO<T>
             }
         });
 
-    public IO<T> HandleErrorWith(Func<Exception, IO<T>> callback)
-    {
-        throw new NotImplementedException();
-    }
+    public IO<T> Retry(int maxAttempt) =>
+        new(() => maxAttempt switch
+        {
+            <= 0 => throw new ArgumentException("Must be greater than 0", nameof(maxAttempt)),
+            1 => UnsafeRun(),
+            _ => Try(UnsafeRun) switch
+            {
+                Success<T>(var value) => value,
+                Failure<T>(_) => Retry(maxAttempt - 1).UnsafeRun(),
+                _ => throw new UnreachableException("Unknown Result subclass")
+            }
+        });
+
+    // public IO<T> HandleErrorWith(IO<Unit> callback)
+    // {
+    //     callback;
+    //     return this;
+    // }
 
     public static IO<T> Fail(Exception error) =>
         new(() => throw error);

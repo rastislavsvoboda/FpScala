@@ -2,8 +2,6 @@
 
 namespace FpScala.Exercises.Action.FP;
 
-using static PreludeLib.Utils;
-
 public class UserCreationService
 {
     private readonly IConsole _console;
@@ -14,22 +12,6 @@ public class UserCreationService
         _console = console;
         _clock = clock;
     }
-
-//     public IO<User> ReadUser() =>
-//         new(() =>
-//         {
-//             // TODO: do with retry
-//
-//             var name = ReadName().UnsafeRun();
-// //        var dateOfBirth = Retry(3, ReadDateOfBirth);
-//             var dateOfBirth = ReadDateOfBirth().UnsafeRun();
-// //        var subscribed = Retry(3, ReadSubscribeToMailingList);
-//             var subscribed = ReadSubscribeToMailingList().UnsafeRun();
-//             var now = _clock.Now;
-//             var user = new User(name, dateOfBirth, subscribed, now);
-//             _console.WriteLine($"User is {user}");
-//             return user;
-//         });
 
     // ugly syntax via nested FlatMap
     public IO<User> ReadUserEx() =>
@@ -44,8 +26,8 @@ public class UserCreationService
 
     public IO<User> ReadUser() =>
         from name in ReadName()
-        from dateOfBirth in ReadDateOfBirth()
-        from subscribed in ReadSubscribeToMailingList()
+        from dateOfBirth in ReadDateOfBirth().Retry(maxAttempt: 3)
+        from subscribed in ReadSubscribeToMailingList().Retry(maxAttempt: 3)
         from now in _clock.Now
         let user = new User(name, dateOfBirth, subscribed, now)
         from _ in WriteLine($"User is {user}")
@@ -56,42 +38,28 @@ public class UserCreationService
         from name in ReadLine()
         select name;
 
-    public IO<DateOnly> ReadDateOfBirth() =>
-        from _ in WriteLine("What's your date of birth? [dd-mm-yyyy]")
-        from line in ReadLine()
-        from dateOfBirth in ParseDateOfBirth(line).OnError(_ => WriteLine("""Incorrect format, for example enter "18-03-2001" for 18th of March 2001"""))
-        select dateOfBirth;
+    public IO<DateOnly> ReadDateOfBirth()
+    {
+        var printError = WriteLine("""Incorrect format, for example enter "18-03-2001" for 18th of March 2001""");
+
+        return from _ in WriteLine("What's your date of birth? [dd-mm-yyyy]")
+            from line in ReadLine()
+            from dateOfBirth in ParseDateOfBirth(line).OnError(_ => printError)
+            select dateOfBirth;
+    }
 
     public IO<DateOnly> ParseDateOfBirth(string line) =>
         new(() => ParseDate(line));
 
-    // public DateOnly ReadDateOfBirthRetry(int maxAttempt) =>
-    //     Retry(maxAttempt, () =>
-    //     {
-    //         _console.WriteLine("What's your date of birth? [dd-mm-yyyy]");
-    //         var line = _console.ReadLine();
-    //         return OnError(
-    //             func: () => ParseDate(line),
-    //             cleanup: _ => _console.WriteLine("""Incorrect format, for example enter "18-03-2001" for 18th of March 2001"""));
-    //     });
+    public IO<bool> ReadSubscribeToMailingList()
+    {
+        var printError = WriteLine("""Incorrect format, enter "Y" for "Yes", "N" for "No" """);
 
-    public IO<bool> ReadSubscribeToMailingList() =>
-        from _ in WriteLine("Would like to subscribe to our mailing list? [Y/N]")
-        from line in ReadLine()
-        from yesNo in ParseLineToBoolean(line).OnError(_ => WriteLine("""Incorrect format, enter "Y" for "Yes", "N" for "No" """))
-        select yesNo;
-
-    // TODO
-
-    // public bool ReadSubscribeToMailingListRetry(int maxAttempt) =>
-    //     Retry(maxAttempt, () =>
-    //     {
-    //         _console.WriteLine("Would like to subscribe to our mailing list? [Y/N]");
-    //         var line = _console.ReadLine();
-    //         return OnError(
-    //             func: () => ParseYesNo(line),
-    //             cleanup: _ => _console.WriteLine("""Incorrect format, enter "Y" for "Yes", "N" for "No" """));
-    //     });
+        return from _ in WriteLine("Would like to subscribe to our mailing list? [Y/N]")
+            from line in ReadLine()
+            from yesNo in ParseLineToBoolean(line).OnError(_ => printError)
+            select yesNo;
+    }
 
     public IO<bool> ParseLineToBoolean(string line) =>
         new(() => ParseYesNo(line));

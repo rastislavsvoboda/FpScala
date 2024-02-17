@@ -100,4 +100,76 @@ public class IOTest
         counter.Should().Be(1, because: "callback was executed");
         result.Should().Be(new Failure<string>(error1));
     }
+
+    [Fact]
+    public void Retry_when_attempt_is_0()
+    {
+        var counter = 0;
+        var action = new IO<int>(() => counter += 1).Retry(0);
+        counter.Should().Be(0, because: "nothing happened before UnsafeRun");
+
+        var result = Try(() => action.UnsafeRun());
+
+        result.IsFailure.Should().BeTrue();
+        ((Failure<int>) result).Exception.Message.Should().Be("Must be greater than 0 (Parameter 'maxAttempt')");
+        counter.Should().Be(0, because: "callback was executed");
+    }
+
+    [Fact]
+    public void Retry_when_action_fails()
+    {
+        var counter = 0;
+        var error = new Exception("Boom");
+        var action = new IO<int>(() =>
+        {
+            counter += 1;
+            throw error;
+        });
+        var retryAction = action.Retry(5);
+        counter.Should().Be(0, because: "nothing happened before UnsafeRun");
+
+        var result = Try(() => retryAction.UnsafeRun());
+
+        result.Should().Be(new Failure<int>(error));
+        counter.Should().Be(5);
+    }
+
+    [Fact]
+    public void Retry_fails_if_max_attempt_is_too_low()
+    {
+        var counter = 0;
+        var error = new Exception("Boom");
+        var action = new IO<string>(() =>
+        {
+            counter += 1;
+            if (counter < 3) throw error;
+            return "Hello";
+        });
+        var retryAction = action.Retry(2);
+        counter.Should().Be(0, because: "nothing happened before UnsafeRun");
+
+        var result = Try(() => retryAction.UnsafeRun());
+
+        result.Should().Be(new Failure<string>(error));
+        counter.Should().Be(2);
+    }
+
+    [Fact]
+    public void Retry_until_action_succeeds()
+    {
+        var counter = 0;
+        var error = new Exception("Boom");
+        var action = new IO<string>(() =>
+        {
+            counter += 1;
+            if (counter < 3) throw error;
+            return "Hello";
+        }).Retry(5);
+        counter.Should().Be(0, because: "nothing happened before UnsafeRun");
+
+        var result = Try(() => action.UnsafeRun());
+
+        result.Should().Be(new Success<string>("Hello"));
+        counter.Should().Be(3);
+    }
 }
