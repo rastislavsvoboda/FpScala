@@ -1,4 +1,8 @@
-﻿namespace FpScala.Exercises.Action.FP;
+﻿using System.Diagnostics;
+using PreludeLib;
+using static PreludeLib.Utils;
+
+namespace FpScala.Exercises.Action.FP;
 
 public class IO<T>
 {
@@ -27,19 +31,24 @@ public class IO<T>
     public IO<TNext> FlatMap<TNext>(Func<T, IO<TNext>> callback) =>
         new(() => callback(UnsafeRun()).UnsafeRun());
 
+    public IO<T> OnError<TOther>(Func<Exception, IO<TOther>> cleanup) =>
+        new(() =>
+        {
+            switch (Try(UnsafeRun))
+            {
+                case Success<T>(var value):
+                    return value;
+                case Failure<T>(var exception):
+                    cleanup(exception).UnsafeRun();
+                    throw exception;
+                default:
+                    throw new UnreachableException("Unknown Result subclass");
+            }
+        });
+
     public IO<T> HandleErrorWith(Func<Exception, IO<T>> callback)
     {
         throw new NotImplementedException();
-
-        // try
-        // {
-        //     this.UnsafeRun();
-        // }
-        // catch (Exception e)
-        // {
-        //     Console.WriteLine(e);
-        //     throw;
-        // }
     }
 
     public static IO<T> Fail(Exception error) =>

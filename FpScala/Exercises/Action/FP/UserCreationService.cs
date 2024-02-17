@@ -2,7 +2,6 @@
 
 namespace FpScala.Exercises.Action.FP;
 
-using static Console;
 using static PreludeLib.Utils;
 
 public class UserCreationService
@@ -53,13 +52,18 @@ public class UserCreationService
         select user;
 
     public IO<string> ReadName() =>
-        WriteLine("What's your name?")
-            .AndThen(ReadLine());
+        from _ in WriteLine("What's your name?")
+        from name in ReadLine()
+        select name;
 
     public IO<DateOnly> ReadDateOfBirth() =>
-        WriteLine("What's your date of birth? [dd-mm-yyyy]")
-            .AndThen(ReadLine())
-            .Map(ParseDate);
+        from _ in WriteLine("What's your date of birth? [dd-mm-yyyy]")
+        from line in ReadLine()
+        from dateOfBirth in ParseDateOfBirth(line).OnError(_ => WriteLine("""Incorrect format, for example enter "18-03-2001" for 18th of March 2001"""))
+        select dateOfBirth;
+
+    public IO<DateOnly> ParseDateOfBirth(string line) =>
+        new(() => ParseDate(line));
 
     // public DateOnly ReadDateOfBirthRetry(int maxAttempt) =>
     //     Retry(maxAttempt, () =>
@@ -72,13 +76,12 @@ public class UserCreationService
     //     });
 
     public IO<bool> ReadSubscribeToMailingList() =>
-        WriteLine("Would like to subscribe to our mailing list? [Y/N]")
-            .AndThen(ReadLine())
-            .Map(ParseYesNo);
+        from _ in WriteLine("Would like to subscribe to our mailing list? [Y/N]")
+        from line in ReadLine()
+        from yesNo in ParseLineToBoolean(line).OnError(_ => WriteLine("""Incorrect format, enter "Y" for "Yes", "N" for "No" """))
+        select yesNo;
+
     // TODO
-    // return OnError(
-    //     func: () => ParseYesNo(line),
-    //     cleanup: _ => _console.WriteLine("""Incorrect format, enter "Y" for "Yes", "N" for "No" """));
 
     // public bool ReadSubscribeToMailingListRetry(int maxAttempt) =>
     //     Retry(maxAttempt, () =>
@@ -89,6 +92,9 @@ public class UserCreationService
     //             func: () => ParseYesNo(line),
     //             cleanup: _ => _console.WriteLine("""Incorrect format, enter "Y" for "Yes", "N" for "No" """));
     //     });
+
+    public IO<bool> ParseLineToBoolean(string line) =>
+        new(() => ParseYesNo(line));
 
     public static bool ParseYesNo(string? line) =>
         line switch
