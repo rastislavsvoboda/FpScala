@@ -29,7 +29,7 @@ public class UserCreationService
             return user;
         });
 
-    private IO<string> ReadName() =>
+    public IO<string> ReadName() =>
         new(() =>
         {
             _console.WriteLine("What's your name?").UnsafeRun();
@@ -91,14 +91,14 @@ public class UserCreationService
             _ => throw new ArgumentException($"""Expected "Y" or "N" but received {line}""")
         };
 
-    public static string FormatYesNo(bool value)
-        => value
+    public static string FormatYesNo(bool value) =>
+        value
             ? "Y"
             : "N";
 
     public static DateOnly ParseDate(string line) =>
         DateOnly.ParseExact(line, "dd-MM-yyyy");
 
-    public static string FormatDate(DateOnly date)
-        => date.ToString("dd-MM-yyyy");
+    public static string FormatDate(DateOnly date) =>
+        date.ToString("dd-MM-yyyy");
 }
