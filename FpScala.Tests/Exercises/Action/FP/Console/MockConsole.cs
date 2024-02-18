@@ -1,7 +1,8 @@
 ﻿using FpScala.Exercises.Action.FP;
+using FpScala.Exercises.Action.FP.Console;
 using PreludeLib;
 
-namespace FpScala.Tests.Exercises.Action.FP;
+namespace FpScala.Tests.Exercises.Action.FP.Console;
 
 public class MockConsole : IConsole
 {

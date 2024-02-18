@@ -1,4 +1,4 @@
-﻿namespace FpScala.Exercises.Action.FP;
+﻿namespace FpScala.Exercises.Action.FP.Console;
 
 public class SystemClock : IClock
 {

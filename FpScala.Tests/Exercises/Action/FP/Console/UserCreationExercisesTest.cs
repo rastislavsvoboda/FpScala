@@ -1,10 +1,9 @@
+using FluentAssertions;
+using FpScala.Exercises.Action.FP.Console;
+using Xunit;
 using static PreludeLib.Utils;
 
-namespace FpScala.Tests.Exercises.Action.FP;
-
-using FpScala.Exercises.Action.FP;
-using FluentAssertions;
-using Xunit;
+namespace FpScala.Tests.Exercises.Action.FP.Console;
 
 public class UserCreationExercisesTest
 {
