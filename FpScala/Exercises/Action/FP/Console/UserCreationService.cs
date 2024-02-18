@@ -24,7 +24,7 @@ public class UserCreationService
                         return WriteLine($"User is {user}").Map(_ => user);
                     }))));
 
-    public IO<User> ReadUser() =>
+    public IO<User?> ReadUser() =>
         from name in ReadName()
         from dateOfBirth in ReadDateOfBirth().Retry(maxAttempt: 3)
         from subscribed in ReadSubscribeToMailingList().Retry(maxAttempt: 3)
