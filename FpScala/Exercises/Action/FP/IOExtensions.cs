@@ -9,7 +9,7 @@ public static class IOExtensions
             var res2 = selector(res1);
             return res2;
         });
-    
+
     public static IO<TResult> SelectMany<TSource, TCollection, TResult>(
         this IO<TSource> source,
         Func<TSource, IO<TCollection>> collectionSelector,
@@ -21,4 +21,10 @@ public static class IOExtensions
             var res3 = resultSelector(res1, res2);
             return res3;
         });
+
+    public static IO<IEnumerable<T>> Sequence<T>(this IEnumerable<IO<T>> source) =>
+        IO<T>.Sequence(source);
+
+    public static IO<IEnumerable<TResult>> Traverse<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, IO<TResult>> selector) =>
+        IO<TSource>.Traverse(source, selector);
 }

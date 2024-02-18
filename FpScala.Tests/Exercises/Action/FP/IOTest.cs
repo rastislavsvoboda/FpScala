@@ -183,6 +183,7 @@ public class IOTest
         counter.Should().Be(0, because: "nothing happened before UnsafeRun");
 
         var result = action.UnsafeRun();
+
         counter.Should().Be(1);
         result.IsSuccess.Should().BeTrue();
     }
@@ -200,6 +201,7 @@ public class IOTest
         counter.Should().Be(0, because: "nothing happened before UnsafeRun");
 
         var result = action.UnsafeRun();
+
         counter.Should().Be(1);
         result.Should().Be(new Failure<int>(error));
     }
@@ -212,12 +214,13 @@ public class IOTest
         var second = new IO<int>(() => counter *= 2).AndThen(new IO<string>(() => "B"));
         var action = first.HandleErrorWith(_ => second);
         counter.Should().Be(0, because: "nothing happened before UnsafeRun");
-        
+
         var result = action.UnsafeRun();
+
         result.Should().Be("A");
         counter.Should().Be(1, because: "Only first is executed");
     }
-    
+
     [Fact]
     public void HandleWithError_failure()
     {
@@ -226,9 +229,49 @@ public class IOTest
         var second = new IO<int>(() => counter *= 2).AndThen(new IO<int>(() => -1));
         var action = first.HandleErrorWith(_ => second);
         counter.Should().Be(0, because: "nothing happened before UnsafeRun");
-        
+
         var result = action.UnsafeRun();
+
         counter.Should().Be(2, because: "first and second were executed in the expected order");
         result.Should().Be(-1);
+    }
+
+    // Search Flight Exercises
+
+    [Fact]
+    public void Sequence()
+    {
+        var counter = 0;
+        var action = new List<IO<int>>
+        {
+            new(() => counter += 2),
+            new(() => counter *= 3),
+            new(() => counter -= 1),
+        }.Sequence();
+        counter.Should().Be(0, because: "nothing happened before UnsafeRun");
+
+        var result = action.UnsafeRun();
+
+        result.Should().BeEquivalentTo(new[] {2, 6, 5});
+        counter.Should().Be(5);
+    }
+
+    [Fact]
+    public void Traverse()
+    {
+        var counter = 0;
+        var data = new[] {1, 2, 3, 4, 5};
+        var action = data.Traverse(n => new IO<char>(() =>
+        {
+            counter += 1;
+            var ordNum = Convert.ToUInt16('a') + n - 1;
+            return Convert.ToChar(ordNum);
+        }));
+        counter.Should().Be(0, because: "nothing happened before UnsafeRun");
+
+        var result = action.UnsafeRun();
+
+        result.Should().BeEquivalentTo(new[] {'a', 'b', 'c', 'd', 'e'});
+        counter.Should().Be(5);
     }
 }
