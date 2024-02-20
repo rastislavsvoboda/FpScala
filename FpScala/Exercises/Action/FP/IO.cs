@@ -47,8 +47,8 @@ public class IO<T>
     public IO<Result<T>> Attempt() =>
         new(() => Try(UnsafeRun));
 
-    public static IO<IEnumerable<T>> Sequence(IEnumerable<IO<T>> actions) =>
-        new(() => actions.Select(x => x.UnsafeRun()));
+    // public static IO<IEnumerable<T>> Sequence(IEnumerable<IO<T>> actions) =>
+    //     new(() => actions.Select(x => x.UnsafeRun()));
 
     // public static IO<IEnumerable<T>> Sequence2(IEnumerable<IO<T>> actions) =>
     //     new(() => actions.Aggregate(
@@ -67,12 +67,12 @@ public class IO<T>
     //         select new List<T> {result1}.Concat(result2);
     // }
 
-    // public static IO<IEnumerable<T>> Sequence4(IEnumerable<IO<T>> actions) =>
-    //     actions.Aggregate(new IO<IEnumerable<T>>(Enumerable.Empty<T>),
-    //         (state, action) =>
-    //             from result1 in state
-    //             from result2 in action
-    //             select result1.Append(result2));
+    public static IO<IEnumerable<T>> Sequence(IEnumerable<IO<T>> actions) =>
+        actions.Aggregate(new IO<IEnumerable<T>>(Enumerable.Empty<T>),
+            (state, action) =>
+                from result1 in state
+                from result2 in action
+                select result1.Append(result2));
 
     public static IO<IEnumerable<TResult>> Traverse<TSource, TResult>(IEnumerable<TSource> source, Func<TSource, IO<TResult>> selector) =>
         IO<TResult>.Sequence(source.Select(selector));
