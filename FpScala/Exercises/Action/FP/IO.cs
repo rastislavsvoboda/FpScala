@@ -19,8 +19,8 @@ public class IO<T>
     public IO<TOther> AndThen<TOther>(IO<TOther> other) =>
         FlatMap(_ => other);
 
-    public IO<TNext> Map<TNext>(Func<T, TNext> callback)
-        => FlatMap(value => new IO<TNext>(() => callback(value)));
+    public IO<TNext> Map<TNext>(Func<T, TNext> callback) =>
+        FlatMap(value => new IO<TNext>(() => callback(value)));
 
     public IO<TNext> FlatMap<TNext>(Func<T, IO<TNext>> callback) =>
         new(() => callback(UnsafeRun()).UnsafeRun());
