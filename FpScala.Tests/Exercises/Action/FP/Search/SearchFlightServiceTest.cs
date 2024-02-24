@@ -44,4 +44,63 @@ public class SearchFlightServiceTest
 
         result.IsSuccess.Should().BeTrue();
     }
+
+    [Property]
+    public void Always_passing_client()
+    {
+        var client = MockSearchFlightClientGenerator.PassingClientGen.Generate();
+        var today = DateTime.Today;
+
+        var result = client.Search(Airport.ParisOrly, Airport.LondonGatwick, today).Attempt().UnsafeRun();
+
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Always_passing_client2()
+    {
+        Prop.ForAll(
+            MockSearchFlightClientGenerator.PassingClientGen.ToArbitrary(),
+            client =>
+            {
+                var today = DateTime.Today;
+
+                var result = client.Search(Airport.ParisOrly, Airport.LondonGatwick, today).Attempt().UnsafeRun();
+
+                return result.IsSuccess.ToProperty();
+            }
+        ).VerboseCheckThrowOnFailure();
+    }
+
+    [Fact]
+    public void Always_failing_client()
+    {
+        Prop.ForAll(
+            MockSearchFlightClientGenerator.FailingClientGen.ToArbitrary(),
+            client =>
+            {
+                var today = DateTime.Today;
+
+                var result = client.Search(Airport.ParisOrly, Airport.LondonGatwick, today).Attempt().UnsafeRun();
+
+                return result.IsFailure.ToProperty();
+            }
+        ).VerboseCheckThrowOnFailure();
+    }
+
+    [Fact]
+    public void Flight_has_defined_airline_and_different_from_and_to_airports_properties()
+    {
+        var flightGen = FlightGenerator.Generate();
+
+        Prop.ForAll(
+                flightGen,
+                flight =>
+                {
+                    flight.Airline.Should().NotBeEmpty();
+                    flight.Duration.Should().BeGreaterThan(TimeSpan.Zero);
+                    Assert.NotEqual(flight.From, flight.To);
+                })
+            .VerboseCheckThrowOnFailure();
+    }
 }

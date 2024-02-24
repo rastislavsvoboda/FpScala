@@ -6,5 +6,5 @@ namespace FpScala.Tests.Exercises.Action.FP.Search;
 public static class GenExtensions
 {
     public static T Generate<T>(this Gen<T> gen) =>
-        gen.Eval(1000, Random.newSeed());
+        gen.Eval(100, Random.newSeed());
 }

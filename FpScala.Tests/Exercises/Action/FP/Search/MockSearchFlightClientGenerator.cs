@@ -6,16 +6,22 @@ namespace FpScala.Tests.Exercises.Action.FP.Search;
 
 public static class MockSearchFlightClientGenerator
 {
-    public static Arbitrary<MockSearchFlightClient> Generate()
-    {
-        var flight = FlightGeneratorEx.Generate();
-        var passing = Gen.Constant(new MockSearchFlightClient(new IO<IEnumerable<Flight>>(() => new[] {flight})));
-        var failing = Gen.Constant(new MockSearchFlightClient(IO<IEnumerable<Flight>>.Fail(new Exception("Boom"))));
+    private static Exception _generalException = new("Boom");
+    private static InvalidOperationException _invalidOperationException = new("Operation failed");
+    private static IOException _ioException = new("Communication failed");
 
-        var frq = Gen.Frequency(
-            new WeightAndValue<Gen<MockSearchFlightClient>>(9, passing),
-            new WeightAndValue<Gen<MockSearchFlightClient>>(1, failing));
+    public static Arbitrary<MockSearchFlightClient> Generate() =>
+        Gen.Frequency(
+                new WeightAndValue<Gen<MockSearchFlightClient>>(9, PassingClientGen),
+                new WeightAndValue<Gen<MockSearchFlightClient>>(1, FailingClientGen))
+            .Select(x => x)
+            .ToArbitrary();
 
-        return frq.Select(x => x).ToArbitrary();
-    }
+    public static Gen<MockSearchFlightClient> PassingClientGen =>
+        Gen.ListOf(FlightGenerator.Generate().Generator)
+            .Select(flights => new MockSearchFlightClient(new IO<IEnumerable<Flight>>(() => flights)));
+
+    public static Gen<MockSearchFlightClient> FailingClientGen =>
+        Gen.Elements(_generalException, _invalidOperationException, _ioException)
+            .Select(ex => new MockSearchFlightClient(IO<IEnumerable<Flight>>.Fail(ex)));
 }
