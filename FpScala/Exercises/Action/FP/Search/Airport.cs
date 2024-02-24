@@ -2,6 +2,10 @@ namespace FpScala.Exercises.Action.FP.Search;
 
 public enum Airport
 {
+    LondonHeathrow,
     LondonGatwick,
-    ParisOrly
+    Melbourne,
+    ParisOrly,
+    ParisCharlesDeGaulle,
+    TokyoAneda
 }

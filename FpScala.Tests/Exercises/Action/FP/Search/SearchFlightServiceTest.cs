@@ -1,6 +1,8 @@
 ﻿using FluentAssertions;
 using FpScala.Exercises.Action.FP;
 using FpScala.Exercises.Action.FP.Search;
+using FsCheck;
+using FsCheck.Xunit;
 using Xunit;
 
 namespace FpScala.Tests.Exercises.Action.FP.Search;
@@ -32,17 +34,10 @@ public class SearchFlightServiceTest
             item => item.Should().Be(flight4));
     }
 
-    [Fact]
-    public void FromTwoClients_should_handle_errors_gracefully()
+    [Property(Arbitrary = new[] {typeof(MockSearchFlightClientGenerator)})]
+    public void FromTwoClients_should_handle_errors_gracefully(MockSearchFlightClient client1, MockSearchFlightClient client2)
     {
-        var now = DateTime.Now;
         var today = DateTime.Today;
-
-        var flight1 = new Flight("1", "BA", Airport.ParisOrly, Airport.LondonGatwick, now, TimeSpan.FromMinutes(100), 0, 89.5m, "");
-
-        var client1 = new MockSearchFlightClient(new IO<IEnumerable<Flight>>(() => new[] {flight1}));
-        var client2 = new MockSearchFlightClient(IO<IEnumerable<Flight>>.Fail(new Exception("Boom")));
-
         var service = new FromTwoClientsSearchFlightService(client1, client2);
 
         var result = service.Search(Airport.ParisOrly, Airport.LondonGatwick, today).Attempt().UnsafeRun();
