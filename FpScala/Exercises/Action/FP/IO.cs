@@ -70,21 +70,15 @@ public class IO<T>
     public static IO<IEnumerable<T>> Sequence(IEnumerable<IO<T>> actions) =>
         actions.Aggregate(new IO<IEnumerable<T>>(Enumerable.Empty<T>),
             (state, action) =>
-                from result1 in state
-                from result2 in action
-                select result1.Append(result2));
+                state.Zip(action).Map<IEnumerable<T>>(t => t.Item1.Append(t.Item2)));
 
     public static IO<IEnumerable<TResult>> Traverse<TSource, TResult>(IEnumerable<TSource> source, Func<TSource, IO<TResult>> selector) =>
         IO<TResult>.Sequence(source.Select(selector));
 
     public static IO<IEnumerable<T>> ParSequence(IEnumerable<IO<T>> actions) =>
-        new(() =>
-        {
-            var tasks = actions.Select(x => Task.Run(x.UnsafeRun)).ToArray();
-            // is this correct and optimal?
-            Task.WhenAll(tasks).Wait();
-            return tasks.Select(x => x.Result);
-        });
+        actions.Aggregate(new IO<IEnumerable<T>>(Enumerable.Empty<T>),
+            (state, action) =>
+                state.ParZip(action).Map<IEnumerable<T>>(t => t.Item1.Append(t.Item2)));
 
     public static IO<IEnumerable<TResult>> ParTraverse<TSource, TResult>(IEnumerable<TSource> source, Func<TSource, IO<TResult>> selector) =>
         IO<TResult>.ParSequence(source.Select(selector));
