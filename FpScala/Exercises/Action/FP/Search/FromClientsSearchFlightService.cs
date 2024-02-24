@@ -13,7 +13,7 @@ public class FromClientsSearchFlightService : ISearchFlightService
 
     public IO<SearchResult> Search(Airport fromAirport, Airport toAirport, DateTime date)
     {
-        return _clients.Traverse(SearchByClient)
+        return _clients.ParTraverse(SearchByClient)
             .Map(x => x.Flatten())
             .Select(flights => new SearchResult(flights));
 

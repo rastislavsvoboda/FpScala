@@ -13,10 +13,18 @@ public class FromTwoClientsSearchFlightService : ISearchFlightService
 
     public IO<SearchResult> Search(Airport fromAirport, Airport toAirport, DateTime date)
     {
+#if false
+// sequential
         return
             from flights1 in SearchByClient(_client1)
             from flights2 in SearchByClient(_client2)
             select new SearchResult(flights1.Concat(flights2));
+#else
+// parallel
+        return
+            from tuple in SearchByClient(_client1).ParZip(SearchByClient(_client2))
+            select new SearchResult(tuple.Item1.Concat(tuple.Item2));
+#endif
 
         // helper func
         IO<IEnumerable<Flight>> SearchByClient(ISearchFlightClient client) =>

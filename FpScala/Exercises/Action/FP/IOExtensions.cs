@@ -27,4 +27,10 @@ public static class IOExtensions
 
     public static IO<IEnumerable<TResult>> Traverse<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, IO<TResult>> selector) =>
         IO<TSource>.Traverse(source, selector);
+
+    public static IO<IEnumerable<T>> ParSequence<T>(this IEnumerable<IO<T>> source) =>
+        IO<T>.ParSequence(source);
+
+    public static IO<IEnumerable<TResult>> ParTraverse<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, IO<TResult>> selector) =>
+        IO<TSource>.ParTraverse(source, selector);
 }

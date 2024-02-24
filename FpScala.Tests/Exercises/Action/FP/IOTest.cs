@@ -274,4 +274,76 @@ public class IOTest
         result.Should().BeEquivalentTo(new[] {'a', 'b', 'c', 'd', 'e'});
         counter.Should().Be(5);
     }
+
+    // Concurrent IO
+
+    [Fact]
+    public void ParZip_second_faster_than_first()
+    {
+        var counter = 0;
+        var first = IO<Unit>.Sleep(10).AndThen(new IO<int>(() => counter += 1));
+        var second = new IO<int>(() => counter *= 2);
+
+        var action = first.ParZip(second);
+        counter.Should().Be(0, because: "nothing happened before UnsafeRun");
+
+        var result = action.UnsafeRun();
+
+        result.Should().Be((1, 0));
+        counter.Should().Be(1, because: "second executes faster, so counter was 0 when doubled");
+    }
+
+    [Fact]
+    public void ParZip_first_faster_than_second()
+    {
+        var counter = 0;
+        var first = new IO<int>(() => counter += 1);
+        var second = IO<Unit>.Sleep(10).AndThen(new IO<int>(() => counter *= 2));
+
+        var action = first.ParZip(second);
+        counter.Should().Be(0, because: "nothing happened before UnsafeRun");
+
+        var result = action.UnsafeRun();
+
+        result.Should().Be((1, 2));
+        counter.Should().Be(2, because: "second executes later, so counter was 1 when doubled");
+    }
+
+    [Fact]
+    public void ParSequence()
+    {
+        var counter = 0;
+        var action = new List<IO<int>>
+        {
+            IO<Unit>.Sleep(10).AndThen(new IO<int>(() => counter *= 3)),
+            new IO<int>(() => counter += 2),
+            IO<Unit>.Sleep(50).AndThen(new IO<int>(() => counter -= 1))
+        }.ParSequence();
+        counter.Should().Be(0, because: "nothing happened before UnsafeRun");
+
+        var result = action.UnsafeRun();
+
+        result.Should().BeEquivalentTo(new[] {6, 2, 5});
+        counter.Should().Be(5);
+    }
+
+    [Fact]
+    public void ParTraverse()
+    {
+        var counter = 0;
+
+        IO<int> SleepAndIncrement(int millis)
+        {
+            return IO<Unit>.Sleep(millis).AndThen(new IO<int>(() => counter += 1));
+        }
+
+        var data = new[] {10, 0, 50};
+        var action = data.ParTraverse(SleepAndIncrement);
+        counter.Should().Be(0, because: "nothing happened before UnsafeRun");
+
+        var result = action.UnsafeRun();
+
+        result.Should().BeEquivalentTo(new[] {2, 1, 3});
+        counter.Should().Be(3);
+    }
 }

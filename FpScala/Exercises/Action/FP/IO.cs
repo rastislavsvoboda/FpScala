@@ -77,6 +77,18 @@ public class IO<T>
     public static IO<IEnumerable<TResult>> Traverse<TSource, TResult>(IEnumerable<TSource> source, Func<TSource, IO<TResult>> selector) =>
         IO<TResult>.Sequence(source.Select(selector));
 
+    public static IO<IEnumerable<T>> ParSequence(IEnumerable<IO<T>> actions) =>
+        new(() =>
+        {
+            var tasks = actions.Select(x => Task.Run(x.UnsafeRun)).ToArray();
+            // is this correct and optimal?
+            Task.WhenAll(tasks).Wait();
+            return tasks.Select(x => x.Result);
+        });
+
+    public static IO<IEnumerable<TResult>> ParTraverse<TSource, TResult>(IEnumerable<TSource> source, Func<TSource, IO<TResult>> selector) =>
+        IO<TResult>.ParSequence(source.Select(selector));
+
     public static IO<T> Fail(Exception error) =>
         new(() => throw error);
 
@@ -85,5 +97,30 @@ public class IO<T>
         {
             System.Diagnostics.Debug.WriteLine(message);
             return Unit.Default;
+        });
+
+    public static IO<Unit> Sleep(int milliseconds) =>
+        new(() =>
+        {
+            // this is just for testing purpose, Sleep should not be used
+            Thread.Sleep(milliseconds);
+            return Unit.Default;
+        });
+
+    public IO<(T, TOther)> Zip<TOther>(IO<TOther> other) =>
+        from first in this
+        from second in other
+        select (first, second);
+
+    public IO<(T, TOther)> ParZip<TOther>(IO<TOther> other) =>
+        new(() =>
+        {
+            var t1 = Task.Run(this.UnsafeRun);
+            var t2 = Task.Run(other.UnsafeRun);
+
+            // this is blocking, is this wrong? how we can await here 
+            Task.WhenAll(t1, t2).Wait();
+
+            return (t1.Result, t2.Result);
         });
 }
