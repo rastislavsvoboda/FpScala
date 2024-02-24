@@ -7,8 +7,7 @@ public static class FlightGenerator
 {
     public static Arbitrary<Flight> Generate()
     {
-        var flightIdGen = Arb.Generate<short>()
-            .Where(n => n > 0)
+        var flightIdGen = Arb.Generate<Guid>()
             .Select(n => n.ToString());
 
         var airportGen = Arb.Generate<Airport>().Two()

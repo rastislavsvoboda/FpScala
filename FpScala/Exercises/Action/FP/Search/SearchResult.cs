@@ -19,6 +19,7 @@ public record SearchResult
             .GroupBy(f => f.FlightId)
             .Select(grp => grp.MinBy(f => f.UnitPrice)!) // take cheapest when there are duplicate flights
             .OrderBy(BestOrdering)
+            .ThenBy(x => x.FlightId) // sort by some unique field to preserve ordering
             .ToImmutableList();
     }
 

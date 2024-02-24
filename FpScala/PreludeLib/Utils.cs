@@ -72,4 +72,7 @@ public static class Utils
     {
         if (!condition) throw getException();
     }
-}
+
+    public static T Id<T>(this T @this) =>
+        @this;
+}       

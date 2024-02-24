@@ -1,9 +1,12 @@
-﻿using FluentAssertions;
+﻿using System.Runtime.InteropServices;
+using FluentAssertions;
 using FpScala.Exercises.Action.FP;
 using FpScala.Exercises.Action.FP.Search;
 using FsCheck;
 using FsCheck.Xunit;
+using PreludeLib;
 using Xunit;
+using Random = System.Random;
 
 namespace FpScala.Tests.Exercises.Action.FP.Search;
 
@@ -89,18 +92,53 @@ public class SearchFlightServiceTest
     }
 
     [Fact]
-    public void Flight_has_defined_airline_and_different_from_and_to_airports_properties()
+    public void FromClients_should_handle_errors_gracefully()
     {
-        var flightGen = FlightGenerator.Generate();
+        var flightGens = Gen.ArrayOf(MockSearchFlightClientGenerator.Generate().Generator);
 
         Prop.ForAll(
-                flightGen,
-                flight =>
-                {
-                    flight.Airline.Should().NotBeEmpty();
-                    flight.Duration.Should().BeGreaterThan(TimeSpan.Zero);
-                    Assert.NotEqual(flight.From, flight.To);
-                })
-            .VerboseCheckThrowOnFailure();
+            flightGens.ToArbitrary(),
+            clients =>
+            {
+                var today = DateTime.Today;
+                var service = new FromClientsSearchFlightService(clients);
+
+                var result = service.Search(Airport.ParisOrly, Airport.LondonGatwick, today).Attempt().UnsafeRun();
+
+                return result.IsSuccess.ToProperty();
+            }
+        ).VerboseCheckThrowOnFailure();
+    }
+
+    [Fact]
+    public void FromClients_clients_order_does_not_matter()
+    {
+        var flightGens = Gen.ArrayOf(MockSearchFlightClientGenerator.Generate().Generator);
+
+        Prop.ForAll(
+            flightGens.ToArbitrary(),
+            clients =>
+            {
+                var today = DateTime.Today;
+                var service1 = new FromClientsSearchFlightService(clients);
+                var service2 = new FromClientsSearchFlightService(clients.Shuffle(new Random()));
+
+                var result1 = service1.Search(Airport.ParisOrly, Airport.LondonGatwick, today).UnsafeRun();
+                var result2 = service2.Search(Airport.ParisOrly, Airport.LondonGatwick, today).UnsafeRun();
+
+                return result1.Flights.SequenceEqual(result2.Flights).ToProperty();
+            }
+        ).VerboseCheckThrowOnFailure();
+    }
+
+    [Fact
+    //    (Skip="long running test just for prove it is correct")
+    ]
+    public void X1000()
+    {
+        for (int i = 0; i < 1000; i++)
+        {
+            FromClients_clients_order_does_not_matter();
+        }
     }
 }
