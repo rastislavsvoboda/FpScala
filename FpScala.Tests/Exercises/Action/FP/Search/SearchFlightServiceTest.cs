@@ -130,7 +130,7 @@ public class SearchFlightServiceTest
         ).VerboseCheckThrowOnFailure();
     }
 
-    [Fact]
+    [Fact(Skip="With explicit delay")]
     public void FromTwoClients_example_with_explicit_delay()
     {
         var now = DateTime.Now;
@@ -156,7 +156,7 @@ public class SearchFlightServiceTest
             item => item.Should().Be(flight4));
     }
 
-    [Fact]
+    [Fact(Skip="With explicit delay")]
     public void FromClients_example_with_explicit_delay()
     {
         var now = DateTime.Now;

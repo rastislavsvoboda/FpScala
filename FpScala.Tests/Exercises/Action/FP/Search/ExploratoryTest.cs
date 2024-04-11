@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+﻿using System.Diagnostics;
+using FluentAssertions;
 using FpScala.Exercises.Action.FP;
 using FsCheck;
 using Xunit;
@@ -45,5 +46,52 @@ public class ExploratoryTest
                 items.Should().BeEquivalentTo(shuffledItems, because: "it compares only elements");
                 //  var items = xs.To
             }).QuickCheckThrowOnFailure();
+    }
+
+    [Fact]
+    public void Test_sequential()
+    {
+        var items = Enumerable.Range(1, 100_000_000).Select(n => $"this is my item {n}").ToList();
+
+        var sw = new Stopwatch();
+        sw.Start();
+        var processed = items
+            .Select((x, i) => $"{i}. {x.ToUpper()}")
+            .ToList();
+        sw.Stop();
+
+        sw.ElapsedMilliseconds.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public void Test_parallel()
+    {
+        var items = Enumerable.Range(1, 100_000_000).Select(n => $"this is my item {n}").ToList();
+
+        var sw = new Stopwatch();
+        sw.Start();
+        var processed = items
+            .AsParallel()
+            .Select((x, i) => $"{i}. {x.ToUpper()}")
+            .ToList();
+        sw.Stop();
+
+        sw.ElapsedMilliseconds.Should().BeGreaterThan(0);
+    }
+    
+    [Fact]
+    public void Test_parallel_with_zip()
+    {
+        var items = Enumerable.Range(1, 100_000_000).Select(n => $"this is my item {n}").ToList();
+    
+        var sw = new Stopwatch();
+        sw.Start();
+        var processed = items
+            .AsParallel()
+            .Zip(Enumerable.Range(1, items.Count).AsParallel(), (x, i) => $"{i}. {x.ToUpper()}")
+            .ToList();
+        sw.Stop();
+    
+        sw.ElapsedMilliseconds.Should().BeGreaterThan(0);
     }
 }

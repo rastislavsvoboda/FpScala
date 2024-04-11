@@ -13,6 +13,9 @@ public class IO<T>
         _func = func;
     }
 
+    public static IO<T> Pure<T>(Func<T> func) =>
+        new(func);
+
     public T UnsafeRun() =>
         _func();
 
@@ -20,10 +23,18 @@ public class IO<T>
         FlatMap(_ => other);
 
     public IO<TNext> Map<TNext>(Func<T, TNext> callback) =>
-        FlatMap(value => new IO<TNext>(() => callback(value)));
+        new(() => callback(UnsafeRun()));
+        //FlatMap(value => new IO<TNext>(() => callback(value)));
+        //FlatMap(value => Pure(() => callback(value)));
+    
+    //return/pure :: U -> M[U]
+    //map/select :: M[U] -> (U->R) -> M[R] 
+    //bind/flatmap :: M[U] -> (U->M[R]) -> M[R]
+
+    // map =  bind(u, u => return(f(u))
 
     public IO<TNext> FlatMap<TNext>(Func<T, IO<TNext>> callback) =>
-        new(() => callback(UnsafeRun()).UnsafeRun());
+        Pure(() => callback(UnsafeRun()).UnsafeRun());
 
     public IO<T> OnError<TOther>(Func<Exception, IO<TOther>> cleanup) =>
         HandleErrorWith(ex => cleanup(ex).AndThen(Fail(ex)));
@@ -45,7 +56,7 @@ public class IO<T>
         });
 
     public IO<Result<T>> Attempt() =>
-        new(() => Try(UnsafeRun));
+        Pure(() => Try(UnsafeRun));
 
     // public static IO<IEnumerable<T>> Sequence(IEnumerable<IO<T>> actions) =>
     //     new(() => actions.Select(x => x.UnsafeRun()));
@@ -76,7 +87,7 @@ public class IO<T>
         IO<TResult>.Sequence(source.Select(selector));
 
     public static IO<IEnumerable<T>> ParSequence(IEnumerable<IO<T>> actions) =>
-        actions.Aggregate(new IO<IEnumerable<T>>(Enumerable.Empty<T>),
+        actions.Aggregate(Pure(Enumerable.Empty<T>),
             (state, action) =>
                 state.ParZip(action).Map<IEnumerable<T>>(t => t.Item1.Append(t.Item2)));
 
@@ -84,17 +95,17 @@ public class IO<T>
         IO<TResult>.ParSequence(source.Select(selector));
 
     public static IO<T> Fail(Exception error) =>
-        new(() => throw error);
+        Pure<T>(() => throw error);
 
     internal static IO<Unit> Debug(string message) =>
-        new(() =>
+        Pure(() =>
         {
             System.Diagnostics.Debug.WriteLine(message);
             return Unit.Default;
         });
 
     public static IO<Unit> Sleep(int milliseconds) =>
-        new(() =>
+        Pure(() =>
         {
             // this is just for testing purpose, Sleep should not be used
             Thread.Sleep(milliseconds);
@@ -107,7 +118,7 @@ public class IO<T>
         select (first, second);
 
     public IO<(T, TOther)> ParZip<TOther>(IO<TOther> other) =>
-        new(() =>
+        Pure(() =>
         {
             var t1 = Task.Run(this.UnsafeRun);
             var t2 = Task.Run(other.UnsafeRun);
